@@ -18,7 +18,7 @@ public class Kit {
     public static final boolean SHOW_TRANCHE_END = true;
     public static final String TRANCHE_END_LABEL = "end";
 
-    public static final boolean SHOW_ARC_RECT = false;
+    public static final boolean SHOW_ARC_RECT = true;
     public static final boolean SHOW_ARC_CIRCLE = true;
     public static final boolean SHOW_UPDATE_TIME = false;
     public static final boolean SHOW_TRAM_HEAD = true;

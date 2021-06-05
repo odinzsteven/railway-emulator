@@ -5,10 +5,8 @@ import dz.kalbo.emulator.tram.EmulatorEngine;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
 
 public class Emulator extends JFrame {
 
@@ -85,7 +83,7 @@ public class Emulator extends JFrame {
                 while (!tranchesNeedDrawing.isEmpty()) {
                     AbstractTranche currentTranche = tranchesNeedDrawing.pollFirst();
                     if (currentTranche != null) {
-                        List<AbstractTranche> nextTrances = currentTranche.getNext();
+                        Iterable<AbstractTranche> nextTrances = currentTranche.getNext();
                         for (AbstractTranche nextTrance : nextTrances)
                             if (!alreadyDrawn.contains(nextTrance))
                                 tranchesNeedDrawing.add(nextTrance);
@@ -200,9 +198,9 @@ public class Emulator extends JFrame {
 
         model.addRoad(road);
 
-        Tram tram = new Tram(1, 15, 40, 4, 5, context);
+        Tram tram = new Tram(1, 15, 20, 4, 5, context);
         tram.setDirectionToStart(false);
-        Speed velocity = new Speed(100 / 1_000d, zoom); // 100px/second
+        Speed velocity = new Speed(50 / 1_000d, zoom); // 100px/second
         tram.updatePosition(tranche6, 0f, velocity);
         model.addTram(tram);
     }

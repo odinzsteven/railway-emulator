@@ -3,32 +3,38 @@ package dz.kalbo.emulator.model;
 import dz.kalbo.emulator.view.Kit;
 
 import java.awt.*;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public abstract class AbstractTranche implements Drawable {
+public abstract class AbstractTranche implements Drawable, Comparable<AbstractTranche> {
 
-    protected final List<AbstractTranche> next = new CopyOnWriteArrayList<>();
-    protected final List<AbstractTranche> previews = new CopyOnWriteArrayList<>();
+    protected final NavigableSet<AbstractTranche> next = new TreeSet<>();
+    protected final NavigableSet<AbstractTranche> previews = new TreeSet<>();
 
     protected final int id;
     protected ScalablePoint start;
     protected ScalablePoint end;
     protected Context currentContext;
     protected float length;
+    protected int priority;
 
     public AbstractTranche(int id, ScalablePoint start, ScalablePoint end, Context currentContext) {
         this.id = id;
         this.start = Objects.requireNonNull(start);
         this.end = Objects.requireNonNull(end);
         this.currentContext = Objects.requireNonNull(currentContext);
+        this.priority = id;
 
         if (start.x == end.x && start.y == end.y)
             throw new IllegalArgumentException("start and end point must be different");
 
         onUpdate();
+    }
+
+    @Override
+    public int compareTo(AbstractTranche o) {
+        return -Integer.compare(this.priority, o.priority);
     }
 
     @Override
@@ -97,21 +103,21 @@ public abstract class AbstractTranche implements Drawable {
         if (next.isEmpty())
             return null;
         else
-            return next.get(0);
+            return next.first();
     }
 
     public AbstractTranche getFirsPreviews() {
         if (previews.isEmpty())
             return null;
         else
-            return previews.get(0);
+            return previews.first();
     }
 
-    public List<AbstractTranche> getNext() {
+    public NavigableSet<AbstractTranche> getNext() {
         return next;
     }
 
-    public List<AbstractTranche> getPreviews() {
+    public NavigableSet<AbstractTranche> getPreviews() {
         return previews;
     }
 
