@@ -134,19 +134,44 @@ public class TestCanvas extends JFrame {
 
         road.setHead(tranche3);
 
-        AbstractTranche subRoad = new ArcTranche(5, new ScalablePoint(420, 220, zoom), new ScalablePoint(560, 160, zoom), context);
-        ArcTranche nextTranche = new ArcTranche(4, new ScalablePoint(560, 160, zoom), new ScalablePoint(650, 100, zoom), context);
-        nextTranche.setSouthDirection(true);
-        subRoad.addNext(nextTranche);
-        road.addFirstToHead(subRoad);
-        StraightTranche tranche6 = new StraightTranche(6, new ScalablePoint(200, 490, zoom), new ScalablePoint(420, 220, zoom), context);
+        AbstractTranche loop0 = new ArcTranche(10, new ScalablePoint(420, 220, zoom), new ScalablePoint(560, 160, zoom), context);
+
+        ArcTranche loop1 = new ArcTranche(11, new ScalablePoint(560, 160, zoom), new ScalablePoint(650, 100, zoom), context);
+        loop0.addNext(loop1);
+        loop1.setSouthDirection(true);
+
+        ArcTranche loop2 = new ArcTranche(12, new ScalablePoint(650, 100, zoom), new ScalablePoint(560, 40, zoom), context);
+        loop1.addNext(loop2);
+
+        ArcTranche loop3 = new ArcTranche(13, new ScalablePoint(560, 40, zoom), new ScalablePoint(450, 100, zoom), context);
+        loop2.addNext(loop3);
+
+        ArcTranche loop4 = new ArcTranche(14, new ScalablePoint(450, 100, zoom), new ScalablePoint(560, 160, zoom), context);
+        loop4.setSouthDirection(true);
+        loop3.addNext(loop4);
+
+        ArcTranche loop5 = new ArcTranche(15, new ScalablePoint(560, 160, zoom), new ScalablePoint(700, 220, zoom), context);
+        loop4.addNext(loop5);
+
+        ArcTranche loop6 = new ArcTranche(16, new ScalablePoint(700, 220, zoom), new ScalablePoint(560, 280, zoom), context);
+        loop6.setSouthDirection(true);
+        loop5.addNext(loop6);
+
+        ArcTranche loop7 = new ArcTranche(17, new ScalablePoint(560, 280, zoom), new ScalablePoint(420, 220, zoom), context);
+        loop7.setSouthDirection(true);
+        loop6.addNext(loop7);
+
+        loop7.addNext(loop0);
+        road.addFirstToHead(loop0);
+
+        StraightTranche tranche6 = new StraightTranche(6, new ScalablePoint(420, 450, zoom), new ScalablePoint(420, 220, zoom), context);
         road.setHead(tranche6);
 
         model.addRoad(road);
 
         Tram tram = new Tram(1, 15, 40, 4, 5, context);
         tram.setDirectionToStart(false);
-        Speed velocity = new Speed(50 / 1_000_000_000d, zoom); // 50px/second
+        Speed velocity = new Speed(100 / 1_000_000_000d, zoom); // 100px/second
         tram.updatePosition(tranche6, 0f, velocity);
         model.addTram(tram);
     }
