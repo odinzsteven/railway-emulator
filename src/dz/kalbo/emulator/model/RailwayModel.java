@@ -8,7 +8,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.Consumer;
 
-public class RailwayModel implements Runnable {
+public class RailwayModel implements Updater {
 
     private final StampedLock lock = new StampedLock();
     private Context context;
@@ -44,11 +44,11 @@ public class RailwayModel implements Runnable {
         trams.add(tram);
     }
 
-    @Override
-    public void run() {
+    public void update(long timeSinceLastUpdate) {
         long lockTime = System.nanoTime();
         long stamp = lock.writeLock();
-        Context updateContext = new Context(this.context);
+        long acquireTime = System.nanoTime();
+        Context updateContext = new Context(this.context, timeSinceLastUpdate);
         try {
             update(updateContext);
         } finally {
@@ -58,9 +58,8 @@ public class RailwayModel implements Runnable {
                 listener.repaint();
 
             if (Kit.SHOW_UPDATE_TIME) {
-                long updateTime = updateContext.getTime();
-                System.out.println("update done in: " + Kit.printAsMillis(now - updateTime)
-                        + " (+" + Kit.printAsMillis(updateTime - lockTime) + ")");
+                System.out.println("update done in: " + Kit.printAsMillis(now - acquireTime)
+                        + " (+" + Kit.printAsMillis(acquireTime - lockTime) + ")");
             }
         }
     }

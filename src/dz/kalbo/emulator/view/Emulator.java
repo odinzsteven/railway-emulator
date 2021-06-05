@@ -5,25 +5,44 @@ import dz.kalbo.emulator.tram.EmulatorEngine;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 
-public class TestCanvas extends JFrame {
+public class Emulator extends JFrame {
 
-    public TestCanvas(RailwayModel model) {
+    private final EmulatorEngine engine;
+    private final RailwayModel model;
+
+    public Emulator(RailwayModel model) {
         super("Test");
-        setContentPane(new DrawingPanel(model));
+        this.engine = new EmulatorEngine();
+        this.engine.addUpdater(model);
+        this.model = model;
+        RailwayCanvas railwayCanvas = new RailwayCanvas(model);
+        model.addRepaintListener(railwayCanvas);
+
+        JPanel contentPane = new JPanel(new BorderLayout());
+        contentPane.add(BorderLayout.CENTER, railwayCanvas);
+        contentPane.add(BorderLayout.SOUTH, newToolbar(engine));
+        setContentPane(contentPane);
     }
 
-    private static final class DrawingPanel extends Container {
-        private final EmulatorEngine engine;
+    private Component newToolbar(EmulatorEngine engine) {
+        JPanel toolbar = new JPanel();
+        JToggleButton pauseButton = new JToggleButton("Pause", !engine.isRunning());
+        pauseButton.addActionListener(e -> engine.setRunning(!pauseButton.isSelected()));
+        toolbar.add(pauseButton);
+        return toolbar;
+    }
+
+    private static final class RailwayCanvas extends Container {
+
         private final RailwayModel model;
 
-        public DrawingPanel(RailwayModel model) {
+        public RailwayCanvas(RailwayModel model) {
             this.model = Objects.requireNonNull(model);
-            this.engine = new EmulatorEngine();
-            this.engine.addUpdater(model);
-            this.model.addRepaintListener(this);
         }
 
         @Override
@@ -55,18 +74,24 @@ public class TestCanvas extends JFrame {
                 int thickness = road.getThickness();
                 Stroke trancheStroke = new BasicStroke(radios * 2 + thickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 
-                LinkedList<AbstractTranche> currentTranches = new LinkedList<>(road.getHeadTranches());
+                LinkedList<AbstractTranche> tranchesNeedDrawing = new LinkedList<>(road.getHeadTranches());
+                HashSet<AbstractTranche> alreadyDrawn = new HashSet<>();
 
                 // draw a label that indicate where the road start
                 if (Kit.SHOW_ROAD_START)
-                    for (AbstractTranche tranche : currentTranches)
+                    for (AbstractTranche tranche : tranchesNeedDrawing)
                         Kit.drawLabel(g, Kit.ROAD_START_LABEL + '#' + road.getId(), tranche.getStart().x, tranche.getStart().y);
 
-                while (!currentTranches.isEmpty()) {
-                    AbstractTranche currentTranche = currentTranches.pollFirst();
+                while (!tranchesNeedDrawing.isEmpty()) {
+                    AbstractTranche currentTranche = tranchesNeedDrawing.pollFirst();
                     if (currentTranche != null) {
-                        currentTranches.addAll(currentTranche.getNext());
+                        List<AbstractTranche> nextTrances = currentTranche.getNext();
+                        for (AbstractTranche nextTrance : nextTrances)
+                            if (!alreadyDrawn.contains(nextTrance))
+                                tranchesNeedDrawing.add(nextTrance);
+
                         currentTranche.draw(g, trancheStroke);
+                        alreadyDrawn.add(currentTranche);
                     }
                 }
             }
@@ -103,7 +128,7 @@ public class TestCanvas extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            TestCanvas canvas = newEmulationCanvas();
+            Emulator canvas = newEmulationCanvas();
             canvas.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             canvas.setSize(800, 600);
             canvas.setLocationRelativeTo(null);
@@ -111,10 +136,10 @@ public class TestCanvas extends JFrame {
         });
     }
 
-    private static TestCanvas newEmulationCanvas() {
+    private static Emulator newEmulationCanvas() {
         RailwayModel model = new RailwayModel(800, 600);
-        model.write(TestCanvas::initModel);
-        return new TestCanvas(model);
+        model.write(Emulator::initModel);
+        return new Emulator(model);
     }
 
     private static void initModel(RailwayModel model) {
@@ -171,7 +196,7 @@ public class TestCanvas extends JFrame {
 
         Tram tram = new Tram(1, 15, 40, 4, 5, context);
         tram.setDirectionToStart(false);
-        Speed velocity = new Speed(100 / 1_000_000_000d, zoom); // 100px/second
+        Speed velocity = new Speed(100 / 1_000d, zoom); // 100px/second
         tram.updatePosition(tranche6, 0f, velocity);
         model.addTram(tram);
     }

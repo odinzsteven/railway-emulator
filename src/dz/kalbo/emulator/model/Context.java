@@ -13,8 +13,8 @@ public class Context {
         this.zoom = zoom;
     }
 
-    public Context(Context context) {
-        this.time = System.nanoTime();
+    public Context(Context context, long timeDiff) {
+        this.time = context.getTime() + timeDiff;
         this.width = context.width;
         this.height = context.height;
         this.zoom = context.zoom;
