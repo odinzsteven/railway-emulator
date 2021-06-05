@@ -159,31 +159,37 @@ public class Emulator extends JFrame {
 
         road.setHead(tranche3);
 
-        AbstractTranche loop0 = new ArcTranche(10, new ScalablePoint(420, 220, zoom), new ScalablePoint(560, 160, zoom), context);
+        boolean inward = true;
+
+        ArcTranche loop0 = new ArcTranche(10, new ScalablePoint(420, 220, zoom), new ScalablePoint(560, 160, zoom), context);
+        loop0.setSouthDirection(!inward);
 
         ArcTranche loop1 = new ArcTranche(11, new ScalablePoint(560, 160, zoom), new ScalablePoint(650, 100, zoom), context);
         loop0.addNext(loop1);
-        loop1.setSouthDirection(true);
+        loop1.setSouthDirection(inward);
 
         ArcTranche loop2 = new ArcTranche(12, new ScalablePoint(650, 100, zoom), new ScalablePoint(560, 40, zoom), context);
+        loop2.setSouthDirection(!inward);
         loop1.addNext(loop2);
 
         ArcTranche loop3 = new ArcTranche(13, new ScalablePoint(560, 40, zoom), new ScalablePoint(450, 100, zoom), context);
         loop2.addNext(loop3);
+        loop3.setSouthDirection(!inward);
 
         ArcTranche loop4 = new ArcTranche(14, new ScalablePoint(450, 100, zoom), new ScalablePoint(560, 160, zoom), context);
-        loop4.setSouthDirection(true);
+        loop4.setSouthDirection(inward);
         loop3.addNext(loop4);
 
         ArcTranche loop5 = new ArcTranche(15, new ScalablePoint(560, 160, zoom), new ScalablePoint(700, 220, zoom), context);
+        loop5.setSouthDirection(!inward);
         loop4.addNext(loop5);
 
         ArcTranche loop6 = new ArcTranche(16, new ScalablePoint(700, 220, zoom), new ScalablePoint(560, 280, zoom), context);
-        loop6.setSouthDirection(true);
+        loop6.setSouthDirection(inward);
         loop5.addNext(loop6);
 
         ArcTranche loop7 = new ArcTranche(17, new ScalablePoint(560, 280, zoom), new ScalablePoint(420, 220, zoom), context);
-        loop7.setSouthDirection(true);
+        loop7.setSouthDirection(inward);
         loop6.addNext(loop7);
 
         loop7.addNext(loop0);
