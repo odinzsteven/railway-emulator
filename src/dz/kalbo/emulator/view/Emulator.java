@@ -189,7 +189,7 @@ public class Emulator extends JFrame {
         loop7.addNext(loop0);
         road.addFirstToHead(loop0);
 
-        StraightTranche tranche6 = new StraightTranche(6, new ScalablePoint(420, 450, zoom), new ScalablePoint(420, 220, zoom), context);
+        StraightTranche tranche6 = new StraightTranche(6, new ScalablePoint(420, 500, zoom), new ScalablePoint(420, 220, zoom), context);
         road.setHead(tranche6);
 
         model.addRoad(road);
