@@ -48,14 +48,17 @@ public abstract class AbstractTranche implements Drawable, Comparable<AbstractTr
 
     @Override
     public final void update(Context newContext) {
-        Context currentContext = this.currentContext;
-        if (Float.compare(newContext.getZoom(), currentContext.getZoom()) != 0) {
+        if (needUpdate(newContext)) {
             float zoom = newContext.getZoom();
             start.scale(zoom);
             end.scale(zoom);
         }
         this.currentContext = newContext;
         onUpdate();
+    }
+
+    public boolean needUpdate(Context newContext) {
+        return Float.compare(newContext.getZoom(), currentContext.getZoom()) != 0;
     }
 
     abstract void onUpdate();

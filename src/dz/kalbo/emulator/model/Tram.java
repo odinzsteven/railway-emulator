@@ -15,7 +15,7 @@ public class Tram implements Drawable {
     private ScalableLength locomotiveLength;
     private ScalableLength wagonLength;
     private int wagonsCount;
-    private int width;
+    private ScalableLength width;
     private Stroke stroke;
     private boolean directionToStart;
 
@@ -39,16 +39,18 @@ public class Tram implements Drawable {
         this.locomotiveLength = new ScalableLength(locomotiveLength, zoom);
         this.wagonLength = new ScalableLength(wagonLength, zoom);
         this.wagonsCount = wagonsCount;
-        this.width = width;
-        this.stroke = new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+        this.width = new ScalableLength(width, zoom);
 
         this.doubleLocomotive = false;
         this.directionToStart = false;
 
-        this.context = context;
         this.velocity = new Speed(zoom);
 
         update(context);
+    }
+
+    private void updateDrawParams() {
+        this.stroke = new BasicStroke(this.width.length, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
     }
 
     @Override
@@ -110,24 +112,14 @@ public class Tram implements Drawable {
     }
 
     public int getWidth() {
-        return width;
+        return width.length;
     }
 
-    public void setWidth(int width) {
+    public void setWidth(ScalableLength width) {
         if (this.width != width) {
+            width.scale(context.getZoom());
             this.width = width;
-            update(context);
-        }
-    }
-
-    public Stroke getStroke() {
-        return stroke;
-    }
-
-    public void setStroke(Stroke stroke) {
-        if (this.stroke != stroke) {
-            this.stroke = stroke;
-            update(context);
+            updateDrawParams();
         }
     }
 
@@ -157,11 +149,14 @@ public class Tram implements Drawable {
     @Override
     public final void update(Context newContext) {
         Context currentContext = this.context;
-        if (Float.compare(newContext.getZoom(), currentContext.getZoom()) != 0) {
+        if (currentContext == null ||
+                Float.compare(newContext.getZoom(), currentContext.getZoom()) != 0) {
             float zoom = newContext.getZoom();
             this.locomotiveLength.scale(zoom);
             this.wagonLength.scale(zoom);
             this.velocity.scale(zoom);
+            this.width.scale(zoom);
+            updateDrawParams();
         }
 
         this.context = newContext;
@@ -170,7 +165,7 @@ public class Tram implements Drawable {
         if (startingTranche != null) {
             startingTranche.update(newContext);
             if (lastTime == null)
-                lastTime = context.getTime();
+                lastTime = this.context.getTime();
             else {
                 double currentSpeed = getCurrentSpeed();
                 if (Double.compare(currentSpeed, 0d) != 0)
@@ -182,8 +177,6 @@ public class Tram implements Drawable {
             this.lastTime = null;
             this.tramShape = null;
         }
-
-        System.out.println(this);
     }
 
     private void updateShape() {

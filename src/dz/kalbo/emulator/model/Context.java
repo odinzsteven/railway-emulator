@@ -13,11 +13,11 @@ public class Context {
         this.zoom = zoom;
     }
 
-    public Context(Context context, long timeDiff) {
-        this.time = context.getTime() + timeDiff;
-        this.width = context.width;
-        this.height = context.height;
-        this.zoom = context.zoom;
+    public Context(int width, int height, float zoom, long time) {
+        this.time = time;
+        this.width = width;
+        this.height = height;
+        this.zoom = zoom;
     }
 
     public long getTime() {
@@ -30,6 +30,13 @@ public class Context {
 
     public int getHeight() {
         return height;
+    }
+
+    public int getScreenWidth() {
+        return (int) (width * zoom);
+    }
+    public int getScreenHeight() {
+        return (int) (height * zoom);
     }
 
     public float getZoom() {

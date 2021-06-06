@@ -82,11 +82,13 @@ public class Road implements Drawable {
         this.radios.scale(newContext.getZoom());
         this.thickness.scale(newContext.getZoom());
 
-        LinkedList<AbstractTranche> currentTranches = new LinkedList<>(headTranches);
-        while (!currentTranches.isEmpty()) {
-            AbstractTranche currentTranche = currentTranches.pollFirst();
+        LinkedList<AbstractTranche> tranchesNeedUpdate = new LinkedList<>(headTranches);
+        while (!tranchesNeedUpdate.isEmpty()) {
+            AbstractTranche currentTranche = tranchesNeedUpdate.pollFirst();
             if (currentTranche != null) {
-                currentTranches.addAll(currentTranche.getNext());
+                for (AbstractTranche tranche : currentTranche.getNext())
+                    if (tranche.needUpdate(newContext))
+                        tranchesNeedUpdate.add(tranche);
 
                 currentTranche.update(newContext);
             }

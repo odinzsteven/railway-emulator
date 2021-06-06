@@ -10,6 +10,9 @@ import java.util.*;
 
 public class Emulator extends JFrame {
 
+    public static final Dimension SCREEN_SIZE = Toolkit.getDefaultToolkit().getScreenSize();
+    public static final Dimension DEFAULT_WINDOW_DIM = new Dimension(SCREEN_SIZE.width / 2, SCREEN_SIZE.height / 2);
+
     private final EmulatorEngine engine;
     private final RailwayModel model;
 
@@ -18,34 +21,66 @@ public class Emulator extends JFrame {
         this.engine = new EmulatorEngine();
         this.engine.addUpdater(model);
         this.model = model;
-        RailwayCanvas railwayCanvas = new RailwayCanvas(model);
-        model.addRepaintListener(railwayCanvas);
+
+        RailwayCanvas railwayCanvas = new RailwayCanvas(model, this);
+        JScrollPane scrollPane = new JScrollPane(railwayCanvas,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        scrollPane.setPreferredSize(DEFAULT_WINDOW_DIM);
+
+        railwayCanvas.setScrollPane(scrollPane);
+        model.addListener(railwayCanvas);
 
         JPanel contentPane = new JPanel(new BorderLayout());
-        contentPane.add(BorderLayout.CENTER, railwayCanvas);
+        contentPane.add(BorderLayout.CENTER, scrollPane);
         contentPane.add(BorderLayout.SOUTH, newToolbar(engine));
         setContentPane(contentPane);
     }
 
     private Component newToolbar(EmulatorEngine engine) {
-        JPanel toolbar = new JPanel();
         JToggleButton pauseButton = new JToggleButton("Pause", !engine.isRunning());
         pauseButton.addActionListener(e -> engine.setRunning(!pauseButton.isSelected()));
+
+        JSlider zoomSlider = new JSlider(25, 500, 100);
+        zoomSlider.addChangeListener(e -> model.setZoom(zoomSlider.getValue() / 100.0f));
+
+        JPanel toolbar = new JPanel();
         toolbar.add(pauseButton);
+        toolbar.add(zoomSlider);
         return toolbar;
     }
 
     private static final class RailwayCanvas extends Container {
 
         private final RailwayModel model;
+        private final JFrame frame;
+        private JScrollPane scrollPane;
 
-        public RailwayCanvas(RailwayModel model) {
+        public RailwayCanvas(RailwayModel model, JFrame frame) {
             this.model = Objects.requireNonNull(model);
+            this.frame = Objects.requireNonNull(frame);
+        }
+
+        public void setScrollPane(JScrollPane scrollPane) {
+            this.scrollPane = scrollPane;
         }
 
         @Override
-        public void repaint() {
-            super.repaint();
+        public void setPreferredSize(Dimension preferredSize) {
+            JScrollBar vScroll = scrollPane.getVerticalScrollBar();
+            float vPosition = (vScroll.getValue() * 1f) / vScroll.getMaximum();
+
+            JScrollBar hScroll = scrollPane.getHorizontalScrollBar();
+            float hPosition = (hScroll.getValue() * 1f) / hScroll.getMaximum();
+
+            System.out.println("before: vPosition = " + vPosition + ", hPosition = " + hPosition);
+
+            super.setPreferredSize(preferredSize);
+            revalidate();
+
+            vScroll.setValue((int) (vPosition * vScroll.getMaximum()));
+            hScroll.setValue((int) (hPosition * hScroll.getMaximum()));
+
+            System.out.println("after: vPosition = " + vPosition + ", hPosition = " + hPosition);
         }
 
         @Override
@@ -53,18 +88,25 @@ public class Emulator extends JFrame {
             super.paint(graphics);
             Graphics2D g = (Graphics2D) graphics;
 
-            // clear screen TODO move inside #paintFrame()
+            int height = getHeight();
+            int width = getWidth();
             g.setColor(ColorPalette.BACKGROUND);
-            g.fillRect(0, 0, getWidth(), getHeight());
+            g.fillRect(0, 0, width, height);
 
-            // TODO remove this dot
-            g.setColor(Color.RED);
-            g.drawRect(0, 0, 1, 1);
-
-            model.read(model -> paintFrame(g, model));
+            model.read(model -> paintFrame(g, model, width, height));
         }
 
-        private void paintFrame(Graphics2D g, RailwayModel model) {
+        private void paintFrame(Graphics2D g, RailwayModel model, int windowWidth, int WindowHeight) {
+            int screenWidth = model.getContext().getScreenWidth();
+            int screenHeight = model.getContext().getScreenHeight();
+            g.translate(Math.max((windowWidth - screenWidth) / 2, 0), Math.max((WindowHeight - screenHeight) / 2, 0));
+
+            g.setColor(ColorPalette.CANVAS_BACKGROUND);
+            g.fillRect(0, 0, screenWidth, screenHeight);
+
+            g.setColor(Color.RED); // TODO remove this
+            g.drawRect(0, 0, 1, 1); // TODO remove this
+
             g.setColor(Color.BLACK);
 
             for (Road road : model.getRoads()) {
@@ -128,7 +170,7 @@ public class Emulator extends JFrame {
         SwingUtilities.invokeLater(() -> {
             Emulator canvas = newEmulationCanvas();
             canvas.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-            canvas.setSize(800, 600);
+            canvas.pack();
             canvas.setLocationRelativeTo(null);
             canvas.setVisible(true);
         });
@@ -165,7 +207,7 @@ public class Emulator extends JFrame {
         loop0.setSouthDirection(!inward);
 
         ArcTranche loop1 = new ArcTranche(11, new ScalablePoint(560, 160, zoom), new ScalablePoint(650, 100, zoom), context);
-//        loop0.addNext(loop1);
+        loop0.addNext(loop1);
         loop1.setSouthDirection(inward);
 
         ArcTranche loop2 = new ArcTranche(12, new ScalablePoint(650, 100, zoom), new ScalablePoint(560, 40, zoom), context);
