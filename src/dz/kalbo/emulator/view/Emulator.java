@@ -11,7 +11,7 @@ import java.util.*;
 public class Emulator extends JFrame {
 
     public static final Dimension SCREEN_SIZE = Toolkit.getDefaultToolkit().getScreenSize();
-    public static final Dimension DEFAULT_WINDOW_DIM = new Dimension(SCREEN_SIZE.width / 2, SCREEN_SIZE.height / 2);
+    public static final Dimension DEFAULT_WINDOW_DIM = new Dimension(SCREEN_SIZE.width * 3 / 4, SCREEN_SIZE.height * 3 / 4);
 
     private final EmulatorEngine engine;
     private final RailwayModel model;
@@ -66,21 +66,8 @@ public class Emulator extends JFrame {
 
         @Override
         public void setPreferredSize(Dimension preferredSize) {
-            JScrollBar vScroll = scrollPane.getVerticalScrollBar();
-            float vPosition = (vScroll.getValue() * 1f) / vScroll.getMaximum();
-
-            JScrollBar hScroll = scrollPane.getHorizontalScrollBar();
-            float hPosition = (hScroll.getValue() * 1f) / hScroll.getMaximum();
-
-            System.out.println("before: vPosition = " + vPosition + ", hPosition = " + hPosition);
-
             super.setPreferredSize(preferredSize);
             revalidate();
-
-            vScroll.setValue((int) (vPosition * vScroll.getMaximum()));
-            hScroll.setValue((int) (hPosition * hScroll.getMaximum()));
-
-            System.out.println("after: vPosition = " + vPosition + ", hPosition = " + hPosition);
         }
 
         @Override
@@ -177,7 +164,7 @@ public class Emulator extends JFrame {
     }
 
     private static Emulator newEmulationCanvas() {
-        RailwayModel model = new RailwayModel(800, 600);
+        RailwayModel model = new RailwayModel(700, 500);
         model.write(Emulator::initModel);
         return new Emulator(model);
     }
@@ -237,7 +224,7 @@ public class Emulator extends JFrame {
         loop7.addNext(loop0);
         road.addFirstToHead(loop0);
 
-        StraightTranche tranche6 = new StraightTranche(6, new ScalablePoint(420, 500, zoom), new ScalablePoint(420, 220, zoom), context);
+        StraightTranche tranche6 = new StraightTranche(6, new ScalablePoint(420, 450, zoom), new ScalablePoint(420, 220, zoom), context);
         road.setHead(tranche6);
 
         model.addRoad(road);
