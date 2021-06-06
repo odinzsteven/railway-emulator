@@ -1,6 +1,6 @@
 package dz.kalbo.emulator.model;
 
-import dz.kalbo.emulator.view.Kit;
+import dz.kalbo.emulator.tools.Kit;
 
 import java.awt.*;
 import java.util.List;

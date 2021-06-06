@@ -1,11 +1,15 @@
 package dz.kalbo.emulator.model;
 
-import dz.kalbo.emulator.view.Kit;
+import dz.kalbo.emulator.tools.FinalList;
+import dz.kalbo.emulator.tools.Kit;
 
 import java.awt.*;
 import java.awt.geom.Path2D;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 public class Tram implements Drawable {
+    private static final LinkedList<AbstractTranche> NO_TRANCHES = new FinalList<>();
     private final int id;
     private boolean doubleLocomotive;
     private ScalableLength locomotiveLength;
@@ -23,6 +27,8 @@ public class Tram implements Drawable {
     // position of tram head that point to the start of the current tranche
     private AbstractTranche headTranche;
     private float headProgress;
+
+    private LinkedList<AbstractTranche> tranchesUnderTram = NO_TRANCHES;
 
     // last time position calculated
     private Long lastTime;
@@ -176,67 +182,106 @@ public class Tram implements Drawable {
             this.lastTime = null;
             this.tramShape = null;
         }
+
+        System.out.println(this);
     }
 
     private void updateShape() {
         Path2D.Float tramShape = new Path2D.Float();
-        AbstractTranche.Iterator iterator = new AbstractTranche.Iterator(headTranche, headProgress);
+        AbstractTranche.Traverser traverser = new AbstractTranche.StaticTraverser(tranchesUnderTram, headProgress);
+//        System.out.println(AbstractTranche.absProgress(traverser.getProgress(), direction));
 
         if (Kit.SHOW_TRAM_HEAD) {
-            tramShape.moveTo(iterator.getX() - 5, iterator.getY());
-            tramShape.lineTo(iterator.getX() + 5, iterator.getY());
+            tramShape.moveTo(traverser.getX() - 5, traverser.getY());
+            tramShape.lineTo(traverser.getX() + 5, traverser.getY());
         }
 
-        tramShape.moveTo(iterator.getX(), iterator.getY());
-        addTramSection(tramShape, iterator, locomotiveLength.length, directionToStart);
+        tramShape.moveTo(traverser.getX(), traverser.getY());
+        addTramSection(tramShape, traverser, locomotiveLength.length, directionToStart);
 
         for (int i = 0; i < wagonsCount; i++)
-            addTramSection(tramShape, iterator, wagonLength.length, directionToStart);
+            addTramSection(tramShape, traverser, wagonLength.length, directionToStart);
 
         if (doubleLocomotive) {
-            addTramSection(tramShape, iterator, locomotiveLength.length, directionToStart);
+            addTramSection(tramShape, traverser, locomotiveLength.length, directionToStart);
         }
 
         this.tramShape = tramShape;
     }
 
-    private void addTramSection(Path2D.Float tramShape, AbstractTranche.Iterator iterator, int length, boolean directionToStart) {
-        int headX = iterator.getX();
-        int headY = iterator.getY();
+    private void addTramSection(Path2D.Float tramShape, AbstractTranche.Traverser traverser, int length, boolean directionToStart) {
+        int headX = traverser.getX();
+        int headY = traverser.getY();
 
         if (directionToStart)
-            iterator.moveTowardStart(length);
+            traverser.moveTowardStart(length);
         else
-            iterator.moveTowardEnd(length);
+            traverser.moveTowardEnd(length);
 
-        int tailX = iterator.getX();
-        int tailY = iterator.getY();
+        int tailX = traverser.getX();
+        int tailY = traverser.getY();
 
         tramShape.lineTo(tailX, tailY);
     }
 
     private void advance(double speed) {
-        AbstractTranche.Iterator iterator = new AbstractTranche.Iterator(headTranche, headProgress);
-
         float distance = (float) (Math.max(context.getTime() - lastTime, 0) * Math.abs(speed));
-        iterator.move(distance, speed);
-
-        // make sure the tram is not outside the railway
         int tramLength = getTotalTramLength();
-        if (movingBackward()) {
-            iterator.move(tramLength, speed);
-            iterator.move(tramLength, -speed);
-        } else {
-            iterator.move(tramLength, -speed);
-            iterator.move(tramLength, speed);
-        }
 
-        this.headTranche = iterator.getCurrentTranche();
-        this.headProgress = iterator.getProgress();
-        this.lastTime = context.getTime();
+        AbstractTranche.Traverser traverser = new AbstractTranche.Traverser(headTranche, headProgress);
+        traverser.move(distance, speed);
+
+        headTranche = traverser.getCurrentTranche();
+        headProgress = traverser.getProgress();
+        lastTime = context.getTime();
+
+        updateTranchesUnderTram(tramLength);
     }
 
-    private boolean movingBackward() {
+    private AbstractTranche traverse(double speed, float distance) {
+        return new AbstractTranche.Traverser(headTranche, headProgress).move(distance, speed).getCurrentTranche();
+    }
+
+    private void updateTranchesUnderTram(int tramLength) {
+        if (headTranche != null) {
+            LinkedList<AbstractTranche> currentTranchesUnderTram = new LinkedList<>();
+            currentTranchesUnderTram.add(headTranche);
+            float tranchesLength = headTranche.getLength() * AbstractTranche.absProgress(headProgress, directionToStart ? -1d : 1);
+
+            Iterator<AbstractTranche> iterator = tranchesUnderTram.iterator();
+            while (iterator.hasNext() && Float.compare(tranchesLength, tramLength) < 0) {
+                tranchesLength += addUnderTram(currentTranchesUnderTram, iterator.next());
+            }
+
+            if (isMovingBackward()) {
+                while (currentTranchesUnderTram.peekLast().getFirstNext() != null
+                        && Float.compare(tranchesLength, tramLength) < 0)
+                    //noinspection ConstantConditions
+                    tranchesLength += addUnderTram(currentTranchesUnderTram, currentTranchesUnderTram.peekLast().getFirstNext());
+            } else {
+                //noinspection ConstantConditions
+                while (currentTranchesUnderTram.peekLast().getFirsPreviews() != null
+                        && Float.compare(tranchesLength, tramLength) < 0)
+                    //noinspection ConstantConditions
+                    tranchesLength += addUnderTram(currentTranchesUnderTram, currentTranchesUnderTram.peekLast().getFirsPreviews());
+            }
+
+            this.tranchesUnderTram = currentTranchesUnderTram;
+        } else
+            tranchesUnderTram = NO_TRANCHES;
+    }
+
+    private float addUnderTram(LinkedList<AbstractTranche> currentTranchesUnderTram, AbstractTranche tranche) {
+        if (tranche != null) {
+            if (!tranche.equals(currentTranchesUnderTram.peekLast())) {
+                currentTranchesUnderTram.addLast(tranche);
+                return tranche.getLength();
+            }
+        }
+        return 0f;
+    }
+
+    private boolean isMovingBackward() {
         return velocity != null && velocity.speed < 0;
     }
 
@@ -249,5 +294,12 @@ public class Tram implements Drawable {
         this.headProgress = headProgress;
         this.velocity = velocity;
         update(context);
+    }
+
+    @Override
+    public String toString() {
+        return "Tram#" + id + "{head=#" + (headTranche != null ? headTranche.id : null) + "," +
+                "over: " + tranchesUnderTram + ", " + velocity + ", " + (directionToStart ? "toStart" : "toEnd") +
+                '}';
     }
 }

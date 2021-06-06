@@ -1,7 +1,7 @@
 package dz.kalbo.emulator.model;
 
 import dz.kalbo.emulator.view.ColorPalette;
-import dz.kalbo.emulator.view.Kit;
+import dz.kalbo.emulator.tools.Kit;
 
 import java.awt.*;
 
@@ -53,40 +53,74 @@ public class ArcTranche extends AbstractTranche {
     public int getX(float progress) {
         if (Float.compare(progress, 1f) < 0) {
             if (Float.compare(progress, 0f) > 0) {
-                int a = end.x - start.x;
-                int b = end.y - start.y;
-                double tan = Math.tan(getProgressAngle(progress));
+                int a = getA();
+                int b = getB();
+                double angle = Kit.normalizeAngle(getProgressAngle(progress));
+                double tan = Math.tan(angle);
                 double delta = (a * b) / Math.sqrt(b * b + a * a * tan * tan);
-                return (int) (rectangle.x + rectangle.width / 2 + delta);
+                return (int) (rectangle.x + deltaX(delta, angle));
             } else
                 return start.x;
         } else
             return end.x;
     }
 
-    public double getProgressAngle(float progress) {
-        float d = getLength() * progress;
-        int a = end.x - start.x;
-        int b = end.y - start.y;
-        // improve implementation TODO
-        // https://mysite.du.edu/~jcalvert/math/ellarc.htm#:~:text=Finding%20the%20lengths%20of%20circular,d%20%3D%202r%20is%20the%20diameter
-        // https://math.stackexchange.com/questions/433094/how-to-determine-the-arc-length-of-ellipse#comment3969027_433908
-        return startPointAngle + (endPointAngle - startPointAngle) * progress;
+    private double deltaX(double delta, double angle) {
+        int r = rectangle.width / 2;
+        if (Double.compare(angle, Kit.BOTTOM_ANGLE) >= 0)
+            return r - delta;
+        else if (Double.compare(angle, Kit.LEFT_ANGLE) >= 0)
+            return r - delta;
+        else if (Double.compare(angle, Kit.TOP_ANGLE) >= 0)
+            return r + delta;
+        else
+            return r + delta;
     }
 
     @Override
     public int getY(float progress) {
         if (Float.compare(progress, 1f) < 0) {
             if (Float.compare(progress, 0f) > 0) {
-                int a = end.x - start.x;
-                int b = end.y - start.y;
-                double tan = Math.tan(getProgressAngle(progress));
+                int a = getA();
+                int b = getB();
+                double angle = Kit.normalizeAngle(getProgressAngle(progress));
+                double tan = Math.tan(angle);
                 double delta = (a * b * tan) / Math.sqrt(b * b + a * a * tan * tan);
-                return (int) (rectangle.y + rectangle.height / 2 - delta);
+                return (int) (rectangle.y + deltaY(delta, angle));
             } else
                 return start.y;
         } else
             return end.y;
+    }
+
+    private double deltaY(double delta, double angle) {
+        int r = rectangle.height / 2;
+        if (Double.compare(angle, Kit.BOTTOM_ANGLE) >= 0)
+            return r + delta;
+        else if (Double.compare(angle, Kit.LEFT_ANGLE) >= 0)
+            return r + delta;
+        else if (Double.compare(angle, Kit.TOP_ANGLE) >= 0)
+            return r - delta;
+        else
+            return r - delta;
+    }
+
+    private int getA() {
+        return end.x - start.x;
+    }
+
+    private int getB() {
+        return end.y - start.y;
+    }
+
+    public double getProgressAngle(float progress) {
+        float distance = getLength() * progress;
+        int a = getA();
+        int b = getB();
+        // improve implementation TODO
+        // https://mysite.du.edu/~jcalvert/math/ellarc.htm#:~:text=Finding%20the%20lengths%20of%20circular,d%20%3D%202r%20is%20the%20diameter
+        // https://math.stackexchange.com/questions/433094/how-to-determine-the-arc-length-of-ellipse#comment3969027_433908
+        return startPointAngle + (endPointAngle - startPointAngle) * progress;
     }
 
     @Override

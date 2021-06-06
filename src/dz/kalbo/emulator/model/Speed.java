@@ -40,4 +40,9 @@ public class Speed {
     public int hashCode() {
         return Objects.hash(originalSpeed, originalZoom);
     }
+
+    @Override
+    public String toString() {
+        return "Speed(" + speed + ')';
+    }
 }

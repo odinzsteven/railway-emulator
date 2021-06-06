@@ -1,4 +1,4 @@
-package dz.kalbo.emulator.view;
+package dz.kalbo.emulator.tools;
 
 import java.awt.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -18,8 +18,8 @@ public class Kit {
     public static final boolean SHOW_TRANCHE_END = true;
     public static final String TRANCHE_END_LABEL = "end";
 
-    public static final boolean SHOW_ARC_RECT = true;
-    public static final boolean SHOW_ARC_CIRCLE = true;
+    public static final boolean SHOW_ARC_RECT = false;
+    public static final boolean SHOW_ARC_CIRCLE = false;
     public static final boolean SHOW_UPDATE_TIME = false;
     public static final boolean SHOW_TRAM_HEAD = true;
 
@@ -75,5 +75,20 @@ public class Kit {
 
     public static String printAsMillis(long nanos) {
         return (nanos / 1_000_000) + " ms";
+    }
+
+    /**
+     * returns an angle that is equal to the given angle but bounded in [0, PI/2[ interval
+     * @param angle an arbitrary angle in radian
+     * @return normalized angle in [0, PI/2[
+     */
+    public static double normalizeAngle(double angle) {
+        double normalizedAngle = angle;
+        while (Double.compare(normalizedAngle, 0) < 0)
+            normalizedAngle += PI_x_2;
+
+        while (Double.compare(normalizedAngle, PI_x_2) >= 0)
+            normalizedAngle -= PI_x_2;
+        return normalizedAngle;
     }
 }

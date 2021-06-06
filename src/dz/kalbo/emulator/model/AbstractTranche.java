@@ -1,11 +1,10 @@
 package dz.kalbo.emulator.model;
 
-import dz.kalbo.emulator.view.Kit;
+import dz.kalbo.emulator.tools.Kit;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.DoubleFunction;
 
 public abstract class AbstractTranche implements Drawable, Comparable<AbstractTranche> {
 
@@ -126,6 +125,11 @@ public abstract class AbstractTranche implements Drawable, Comparable<AbstractTr
     }
 
     @Override
+    public String toString() {
+        return "Tranche#" + id;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof AbstractTranche)) return false;
@@ -157,7 +161,7 @@ public abstract class AbstractTranche implements Drawable, Comparable<AbstractTr
         return direction > 0 ? progress : 1f - progress;
     }
 
-    public static final class Iterator {
+    public static class Traverser {
 
         private AbstractTranche tranche;
         private float progress;
@@ -165,20 +169,20 @@ public abstract class AbstractTranche implements Drawable, Comparable<AbstractTr
         private Integer currentX;
         private Integer currentY;
 
-        public Iterator(AbstractTranche tranche, float progress) {
-            this.tranche = tranche;
+        public Traverser(AbstractTranche tranche, float progress) {
+            this.tranche = Objects.requireNonNull(tranche);
             this.progress = progress;
         }
 
-        public Iterator moveTowardStart(float length) {
+        public Traverser moveTowardStart(float length) {
             return move(length, 1);
         }
 
-        public Iterator moveTowardEnd(float length) {
+        public Traverser moveTowardEnd(float length) {
             return move(length, -1);
         }
 
-        public AbstractTranche.Iterator move(float length, double direction) {
+        public Traverser move(float length, double direction) {
             float coveredDistance = AbstractTranche.absProgress(progress, direction) * tranche.getLength();
             float distance = coveredDistance + length;
 
@@ -199,7 +203,7 @@ public abstract class AbstractTranche implements Drawable, Comparable<AbstractTr
             return this;
         }
 
-        public Iterator moveToEnd(double speed) {
+        public Traverser moveToEnd(double speed) {
             return move(Float.MAX_VALUE, speed);
         }
 
@@ -239,6 +243,22 @@ public abstract class AbstractTranche implements Drawable, Comparable<AbstractTr
                     ", x=" + getX() +
                     ", y=" + getY() +
                     '}';
+        }
+    }
+
+    public static class StaticTraverser extends Traverser {
+
+        private final Iterator<? extends AbstractTranche> iterator;
+
+        public StaticTraverser(Deque<? extends AbstractTranche> tranches, float progress) {
+            super(tranches.peekFirst(), progress);
+            this.iterator = tranches.iterator();
+            this.iterator.next();
+        }
+
+        @Override
+        public AbstractTranche getNextTranche(double direction) {
+            return iterator.hasNext() ? iterator.next() : null;
         }
     }
 }

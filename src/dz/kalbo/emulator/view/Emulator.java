@@ -1,12 +1,12 @@
 package dz.kalbo.emulator.view;
 
 import dz.kalbo.emulator.model.*;
+import dz.kalbo.emulator.tools.Kit;
 import dz.kalbo.emulator.tram.EmulatorEngine;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class Emulator extends JFrame {
 
@@ -144,8 +144,10 @@ public class Emulator extends JFrame {
         Context context = model.getContext();
         float zoom = context.getZoom();
         Road road = new Road(1, context, 2, 4);
-        road.addFirstToHead(new StraightTranche(1, new ScalablePoint(270, 140, zoom), new ScalablePoint(230, 50, zoom), context));
-        road.addFirstToHead(new StraightTranche(2, new ScalablePoint(270, 140, zoom), new ScalablePoint(25, 140, zoom), context));
+        StraightTranche tranche1 = new StraightTranche(1, new ScalablePoint(270, 140, zoom), new ScalablePoint(230, 50, zoom), context);
+        road.addFirstToHead(tranche1);
+        StraightTranche tranche2 = new StraightTranche(2, new ScalablePoint(270, 140, zoom), new ScalablePoint(25, 140, zoom), context);
+        road.addFirstToHead(tranche2);
         // top right
 //        ArcTranche tranche3 = new ArcTranche(3, new ScalablePoint(420, 90, zoom), new ScalablePoint(270, 140, zoom), context);
         // bottom right
@@ -163,7 +165,7 @@ public class Emulator extends JFrame {
         loop0.setSouthDirection(!inward);
 
         ArcTranche loop1 = new ArcTranche(11, new ScalablePoint(560, 160, zoom), new ScalablePoint(650, 100, zoom), context);
-        loop0.addNext(loop1);
+//        loop0.addNext(loop1);
         loop1.setSouthDirection(inward);
 
         ArcTranche loop2 = new ArcTranche(12, new ScalablePoint(650, 100, zoom), new ScalablePoint(560, 40, zoom), context);
@@ -178,11 +180,11 @@ public class Emulator extends JFrame {
         loop4.setSouthDirection(inward);
         loop3.addNext(loop4);
 
-        ArcTranche loop5 = new ArcTranche(15, new ScalablePoint(560, 160, zoom), new ScalablePoint(700, 220, zoom), context);
+        ArcTranche loop5 = new ArcTranche(15, new ScalablePoint(560, 160, zoom), new ScalablePoint(650, 220, zoom), context);
         loop5.setSouthDirection(!inward);
         loop4.addNext(loop5);
 
-        ArcTranche loop6 = new ArcTranche(16, new ScalablePoint(700, 220, zoom), new ScalablePoint(560, 280, zoom), context);
+        ArcTranche loop6 = new ArcTranche(16, new ScalablePoint(650, 220, zoom), new ScalablePoint(560, 280, zoom), context);
         loop6.setSouthDirection(inward);
         loop5.addNext(loop6);
 
@@ -201,7 +203,7 @@ public class Emulator extends JFrame {
         Tram tram = new Tram(1, 15, 20, 4, 5, context);
         tram.setDirectionToStart(false);
         Speed velocity = new Speed(50 / 1_000d, zoom); // 100px/second
-        tram.updatePosition(tranche6, 0f, velocity);
+        tram.updatePosition(tranche6, 0.5f, velocity);
         model.addTram(tram);
     }
 }
